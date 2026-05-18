@@ -13,8 +13,13 @@ from models import EvaluateRequest, EvaluationResult, NextQuestionRequest, NextQ
 
 settings = get_settings()
 app = FastAPI(title="Голосовой экзаменатор API", version="1.0.0")
-app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins_list, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
-init_db()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 def parse_tickets(raw_text: str) -> list[str]:
     """Парсит формат: Билет 1: Текст вопроса."""
