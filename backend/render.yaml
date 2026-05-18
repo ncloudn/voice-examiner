@@ -9,6 +9,6 @@ services:
       - key: GIGACHAT_SCOPE
         value: GIGACHAT_API_PERS
       - key: VERIFY_SSL_CERTS
-        value: "true"
+        value: "False"
       - key: DATABASE_URL
         value: sqlite:///./voice_examiner.db
