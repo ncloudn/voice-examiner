@@ -21,6 +21,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.on_event("startup")
+def on_startup():
+    init_db()
+
 def parse_tickets(raw_text: str) -> list[str]:
     """Парсит формат: Билет 1: Текст вопроса."""
     pattern = re.compile(r"(?:^|\n)\s*Билет\s*\d+\s*[:\-–]\s*(.+?)(?=(?:\n\s*Билет\s*\d+\s*[:\-–])|\Z)", re.I | re.S)
@@ -36,6 +40,7 @@ def health() -> dict[str, str]:
 
 @app.post("/upload_tickets", response_model=UploadTicketsResponse)
 def upload_tickets(payload: UploadTicketsRequest, db: Session = Depends(get_db)):
+    init_db()
     questions = parse_tickets(payload.raw_text)
     if not questions:
         raise HTTPException(status_code=400, detail="Не найдено ни одного билета")
