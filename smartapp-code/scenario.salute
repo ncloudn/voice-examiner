@@ -1,0 +1,86 @@
+# Голосовой экзаменатор. SmartApp Code DSL-сценарий.
+# В SmartApp Studio укажите backend webhook:
+# https://<ваш-домен>/smartapp/webhook
+#
+# ВАЖНО: синтаксис webhook/action в SmartApp Code может отличаться в зависимости от версии Studio.
+# Состояния и a:/q:-логика сохранены по заданию; URL backend подставьте в настройках проекта.
+
+variables:
+  currentTicketId = null
+  answeredTickets = []
+  score = 0
+  mode = "forward"
+
+state: Start
+  a: Привет! Я голосовой экзаменатор. Загрузите билеты в приложении или скажите «Начать экзамен». || auto_listening = true
+  q: Начать экзамен -> idle
+  q: Загрузить билеты -> uploadTickets
+  q: По порядку -> setModeForward
+  q: Обратный порядок -> setModeReverse
+  q: Рандом -> setModeRandom
+  q: Конкретный билет * -> setModeSpecific
+
+state: uploadTickets
+  a: Билеты загружаются в окне приложения. Вставьте текст в формате «Билет 1: вопрос» и нажмите кнопку загрузки. || auto_listening = true
+  q: Начать экзамен -> idle
+  q: Назад -> Start
+
+state: setModeForward
+  script:
+    mode = "forward"
+  a: Режим установлен: по порядку. Скажите «Начать экзамен». || auto_listening = true
+  q: Начать экзамен -> idle
+
+state: setModeReverse
+  script:
+    mode = "reverse"
+  a: Режим установлен: обратный порядок. Скажите «Начать экзамен». || auto_listening = true
+  q: Начать экзамен -> idle
+
+state: setModeRandom
+  script:
+    mode = "random"
+  a: Режим установлен: рандом. Скажите «Начать экзамен». || auto_listening = true
+  q: Начать экзамен -> idle
+
+state: setModeSpecific
+  script:
+    mode = "specific"
+  a: Режим установлен: конкретный билет. Номер выберите в интерфейсе или скажите «Начать экзамен». || auto_listening = true
+  q: Начать экзамен -> idle
+
+state: idle
+  a: Начинаю экзамен. Сейчас получу первый вопрос. || auto_listening = true
+  # На реальной платформе этот шаг должен вызвать webhook /next_question или /smartapp/webhook.
+  # Backend вернёт smart_app_data для Canvas App.
+  webhook: /smartapp/webhook {"action":"next", "mode":"${mode}", "currentTicketId":"${currentTicketId}", "answeredTickets":"${answeredTickets}"} -> askQuestion
+
+state: askQuestion
+  a: Вопрос показан на экране. Отвечайте голосом или текстом. || auto_listening = true
+  q: Следующий вопрос -> nextQuestion
+  q: Повтори вопрос -> repeatQuestion
+  q: Закончить экзамен -> finishExam
+  q: * -> waitAnswer
+
+state: repeatQuestion
+  a: Повторяю вопрос. Посмотрите текст вопроса на экране приложения. || auto_listening = true
+  webhook: /smartapp/webhook {"action":"repeat"} -> askQuestion
+
+state: waitAnswer
+  a: Ответ принят. Сейчас оценю его. || auto_listening = false
+  # Передайте распознанный текст в backend /evaluate.
+  webhook: /smartapp/webhook {"action":"evaluate", "currentTicketId":"${currentTicketId}", "text":"$query"} -> evaluateAnswer
+
+state: evaluateAnswer
+  a: Оценка готова. Результат показан на экране. || auto_listening = true
+  q: Следующий вопрос -> nextQuestion
+  q: Повтори вопрос -> repeatQuestion
+  q: Закончить экзамен -> finishExam
+
+state: nextQuestion
+  a: Перехожу к следующему вопросу. || auto_listening = true
+  webhook: /smartapp/webhook {"action":"next", "mode":"${mode}", "currentTicketId":"${currentTicketId}", "answeredTickets":"${answeredTickets}"} -> askQuestion
+
+state: finishExam
+  a: Экзамен завершён. Итоговые баллы показаны на экране. || auto_listening = false
+  webhook: /smartapp/webhook {"action":"finish", "score":"${score}"} -> Start

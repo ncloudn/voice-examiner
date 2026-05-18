@@ -1,0 +1,19 @@
+# secrets
+.env
+backend/.env
+canvas-app/.env
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+voice_examiner.db
+
+# node
+node_modules/
+build/
+dist/
+
+# misc
+.DS_Store

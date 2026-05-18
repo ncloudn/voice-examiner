@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: voice-examiner-backend
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: GIGACHAT_SCOPE
+        value: GIGACHAT_API_PERS
+      - key: VERIFY_SSL_CERTS
+        value: "true"
+      - key: DATABASE_URL
+        value: sqlite:///./voice_examiner.db
