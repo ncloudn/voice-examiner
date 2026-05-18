@@ -1,6 +1,6 @@
 import { ExamMode, EvaluationResult, Ticket } from '../types';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const API_URL = process.env.REACT_APP_API_URL || 'https://voice-examiner-backend.onrender.com';
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(`${API_URL}${path}`, {
